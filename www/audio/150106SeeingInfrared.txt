@@ -1,0 +1,9 @@
+Sometimes it’s hard to see the light. Especially if it lies outside the visible spectrum, like x-rays or ultraviolet radiation. But if you long to see the unseeable, you might be interested to hear that under certain conditions people can catch a glimpse of usually invisible infrared light. That’s according to a study in the Proceedings of the National Academy of Sciences. [Grazyna Palczewska et al, Human infrared vision is triggered by two-photon chromophore isomerization]
+
+Our eyes are sensitive to elementary particles called photons that have sufficient energy to excite light-sensitive receptor proteins in our retinas. But the photons in infrared radiation don’t have enough oomph. We can detect these lower energy photons using what are sometimes called night-vision goggles or cameras. But the naked eye is usually blind to infrared radiation.
+
+But recently researchers in a laser lab noticed that they sometimes saw flashes of light while working with devices that emitted brief infrared pulses. So they filled a test tube with retinal cells and zapped it with their lasers. When the light pulses rapidly enough, the receptors can get hit with two photons at the same time—which supplies enough energy to excite the receptor. This double dose makes the infrared visible.
+
+One application of the finding is that it could give doctors a new tool to diagnose diseases of the retina. So they could eyeball trouble before it might otherwise be seen.
+
+—Karen Hopkin

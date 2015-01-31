@@ -1,0 +1,53 @@
+[
+  {
+    "id":"1",
+    "title":"How Are You",
+    "audio":"audio/How Are You_.m4a",
+    "text":"How are you?",
+    "icon":"audio/eng-speaking.jpg",
+    "status":"new"
+  },
+  {
+    "id":"2",
+    "title":"What's Your Name",
+    "audio":"audio/What's Your Name_.m4a",
+    "text":"What's your name?",
+    "icon":"audio/eng-speaking.jpg",
+    "status":"new"
+  },
+  {
+    "id":"3",
+    "title":"What's Your Favorite Color",
+    "audio":"audio/What's Your Favorite Color_.m4a",
+    "text":"What's your favorite color?",
+    "icon":"audio/eng-speaking.jpg",
+    "status":"new"
+  },
+  {
+    "id":"4",
+    "title":"Large Carnivores Getting Comfy in Europe",
+    "audio":"audio/150102EuropeCarnivores.mp3",
+    "script":"audio/150102EuropeCarnivores.txt",
+    "url":"http://www.scientificamerican.com/podcast/episode/large-carnivores-getting-comfy-in-europe/",
+    "icon":"audio/science-clock.gif",
+    "status":"new"
+  },
+  {
+    "id":"5",
+    "title":"Active Sun at Birth Cut Historical Life Spans  ",
+    "audio":"audio/150109SunBirths.mp3",
+    "script":"audio/150109SunBirths.txt",
+    "url":"http://www.scientificamerican.com/podcast/episode/active-sun-at-birth-cut-historical-lifespans/",
+    "icon":"audio/science-clock.gif",
+    "status":"uploaded"
+  },
+  {
+    "id":"6",
+    "title":"Human Eye Sometimes Sees the Unseeable",
+    "audio":"audio/150106SeeingInfrared.mp3",
+    "script":"audio/150106SeeingInfrared.txt",
+    "url":"http://www.scientificamerican.com/podcast/episode/human-eye-sometimes-sees-the-unseeable/",
+    "icon":"audio/science-clock.gif",
+    "status":"archived"
+  }
+]

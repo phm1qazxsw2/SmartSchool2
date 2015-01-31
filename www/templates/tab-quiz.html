@@ -1,0 +1,19 @@
+<ion-view view-title="錄音作業">
+  <ion-content>
+    <ion-list>
+      <ion-item class="item-remove-animate item-avatar item-icon-right"
+                ng-repeat="quiz in quizzes" type="item-text-wrap" href="#/tab/quiz/{{quiz.id}}">
+          <img ng-src="{{quiz.icon}}">
+          <h2>{{quiz.title}}</h2>
+          {{quiz.status}}
+          <i class="icon ion-chevron-right icon-accessory"></i>
+          <ion-option-button class="button-assertive" ng-click="remove(quiz)" ng-if="quiz.status=='archived'">
+            Delete
+          </ion-option-button>
+      </ion-item>
+    </ion-list>
+
+    <br/><br/>
+
+  </ion-content>
+</ion-view>
