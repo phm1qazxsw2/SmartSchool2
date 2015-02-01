@@ -2,6 +2,7 @@ angular.module('starter.controllers', ['starter.services'])
 
 .controller('TabCtrl', function($scope, Audio, Notice, $rootScope, $ionicLoading) {
 
+  $rootScope.statusbar = { show:false, message:null };
   $rootScope.channels = [];
   $rootScope.badge = {
      quiz:0,
@@ -12,34 +13,26 @@ angular.module('starter.controllers', ['starter.services'])
      messages:null
   }
 
-  $rootScope.flashMessageBadge = function() {
-    //var _badge_message = 0;
+  $rootScope.receiveNewMessage = function() {
+    $rootScope.statusbar.message = "收到新的通知！";
+    $rootScope.statusbar.show = true;
+    setTimeout(function() {
+      $rootScope.statusbar.show = false;
+      $rootScope.$apply();
+    }, 6000)
+
     //var _counter = 0;
     //var timer = setInterval(function(){
-    //  if ($rootScope.badge.message==0) {
-    //    $rootScope.badge.message = _badge_message;
+    //  if ($rootScope.badgestyle=='badge-stable') {
+    //    $rootScope.badgestyle='badge-assertive';
     //  }
     //  else {
-    //    _badge_message = $rootScope.badge.message;
-    //    $rootScope.badge.message = 0;
+    //    $rootScope.badgestyle='badge-stable';
     //  }
-    //  $scope.$apply();
+    //  $rootScope.$apply();
     //  if (++_counter % 20==0)
     //    clearInterval(timer);
-    //},300)
-
-    var _counter = 0;
-    var timer = setInterval(function(){
-      if ($rootScope.badgestyle=='badge-stable') {
-        $rootScope.badgestyle='badge-assertive';
-      }
-      else {
-        $rootScope.badgestyle='badge-stable';
-      }
-      $rootScope.$apply();
-      if (++_counter % 20==0)
-        clearInterval(timer);
-    },400)
+    //},400)
   }
 
   $rootScope.decreaseChannelUnread = function(channel_id) {
@@ -389,7 +382,7 @@ angular.module('starter.controllers', ['starter.services'])
   };
 
   $scope.testEffect = function() {
-    $rootScope.flashMessageBadge();
+    $rootScope.receiveNewMessage();
   }
 
 })

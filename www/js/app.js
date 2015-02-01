@@ -46,15 +46,12 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
 
 
 .run(function($ionicPlatform, User) {
-  $ionicPlatform.ready(function() {
+
+    $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
     if (window.cordova && window.cordova.plugins.Keyboard) {
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
-    }
-    if (window.StatusBar) {
-      // org.apache.cordova.statusbar required
-      StatusBar.styleDefault();
     }
 
     if (window.plugins && window.plugins.jPushPlugin) {
@@ -64,6 +61,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
       window.plugins.jPushPlugin.getRegistrationID(function(data){
         try{
           console.log("## 4 registrationID=" + data + "#");
+
           User.setConfig({
             uuid:ionic.Platform.device().uuid,
             jpush_id:data,
@@ -200,8 +198,8 @@ window.messageCallback = function(data){
     console.log("in message callback1");
     var $body = angular.element(document.body);
     var $rootScope = $body.scope().$root;
-    $rootScope.badge.message ++;
-    $rootScope.flashMessageBadge(); // has $apply inside
+    $rootScope.receiveNewMessage(); // has $apply inside
+    $rootScope.$apply();
   }
   else
     console.log("error:" + data);

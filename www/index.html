@@ -16,7 +16,7 @@
     <script src="lib/ionic/js/ionic.bundle.js"></script>
 
     <!-- cordova script (this will be a 404 during development) -->
-    <script type="text/javascript" src="js/ng-cordova.min.js"></script>
+    <!--<script type="text/javascript" src="js/ng-cordova.min.js"></script>-->
     <script type="text/javascript" src="cordova.js"></script>
 
     <!-- fullcalender -->
@@ -42,6 +42,9 @@
       <ion-nav-back-button>
       </ion-nav-back-button>
     </ion-nav-bar>
+    <div class="bar bar-loading bar-positive" ng-if="statusbar.show">
+      {{statusbar.message}}
+    </div>
     <!--
       The views will be rendered in the <ion-nav-view> directive below
       Templates are in the /templates folder (but you could also
