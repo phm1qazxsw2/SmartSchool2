@@ -26,18 +26,11 @@ angular.module('starter.controllers', ['starter.services'])
         var diff_id = diff_channels[i].id;
         Notice.getChannelMessages(diff_id, function(cache) {
           // 如果刚好现在的页面就是这个channel的message页
-          console.log("### xyztuv");
           var t1 = ($rootScope.cur_page.state == 'tab.message-channel');
-          console.log("## t1=" + t1);
           var a = $rootScope.cur_page.channel_id;
-          console.log("## t1.1=" + t1);
           var b = diff_id;
-          console.log("## t1.2=" + t1);
           var t2 = (a==b);
-          console.log("## t2=" + t2);
           if (t1 && t2) {
-            console.log("### 123456");
-            console.log("### in here channel id=" + diff_id);
             for (var j=0; j<$rootScope.channels.length; j++) {
               if ($rootScope.channels[j].id == diff_id) {
                 $rootScope.channels[j].messages = cache.messages;
@@ -45,9 +38,6 @@ angular.module('starter.controllers', ['starter.services'])
                 $rootScope.$apply();
               }
             }
-          }
-          else {
-            console.log("### abcdef");
           }
         }, null, true /*force to server*/);
       }
@@ -81,13 +71,11 @@ angular.module('starter.controllers', ['starter.services'])
 
   $rootScope.refreshChannels = function(callback) {
     var org_unread_map = new Array;
-    console.log("##a1");
     for (var i=0; i<$rootScope.channels.length; i++) {
       var c = $rootScope.channels[i];
       org_unread_map[c.id] = c.unread;
     }
     var diffs = new Array;
-    console.log("##a2");
     Notice.getChannels(function(channels){
       $rootScope.channels = channels;
       var unread = 0;

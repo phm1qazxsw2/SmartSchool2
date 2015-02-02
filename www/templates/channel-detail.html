@@ -3,7 +3,7 @@
     <ion-list>
       <ion-item class="item-remove-animate item-icon-left item-icon-right"
                 ng-repeat="message in cur_channel.messages track by $index"
-                type="item-text-wrap" href="#/tab/message/{{cache.channel.id}}/{{message.id}}">
+                type="item-text-wrap" href="#/tab/message/{{cur_channel.id}}/{{message.id}}">
         <i class="icon positive ion-chatbubble" ng-if="message.last_read==null"></i>
         <h2>
           {{message.title}} ...

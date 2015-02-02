@@ -253,14 +253,12 @@ angular.module('starter.services', ['starter.user_service'])
       })
     },
     getChannelMessages:function(channel_id, callback, error_callback, force_get) {
-      console.log("## d1");
       var cache = cached_map[channel_id];
       if (cache && !force_get) {
         console.log("using cache");
         callback(cache);
         return;
       }
-      console.log("## d2");
       var url = url_prefix + channel_message_url;
       var p = new Object;
       p.c = channel_id;
@@ -272,10 +270,8 @@ angular.module('starter.services', ['starter.user_service'])
         else
           throw "uuid is null, User.setConfig need to be called upon entering";
       }
-      console.log("## d3");
       $http.get(url, {params:p}).success(function(data){
         cached_map[channel_id] = data;
-        console.log("## d4");
         callback(data);
       }).error(function(data, status) {
         if (debug==1) {
@@ -291,9 +287,6 @@ angular.module('starter.services', ['starter.user_service'])
         console.log("error in calling " + url + " data=" + data + " status=" + status);
         error_callback && error_callback(data, status);
       })
-    },
-    clearCache:function(channel) {
-      cached_map[channel.id] = null;
     },
     setRead:function(message) {
       if (message.last_read==null) {
@@ -322,7 +315,7 @@ angular.module('starter.services', ['starter.user_service'])
     getMessage:function(channel_id, message_id, callback) {
       var cache = cached_map[channel_id];
       if (!cache) {
-        alert('error:cache is empty');
+        alert('error:cache is empty channel_id=' + channel_id);
       }
       for (var i=0; i<cache.messages.length; i++) {
         if (cache.messages[i].id==message_id) {
