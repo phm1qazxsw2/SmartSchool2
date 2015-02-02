@@ -252,13 +252,15 @@ angular.module('starter.services', ['starter.user_service'])
         error_callback && error_callback(data, status);
       })
     },
-    getChannelMessages:function(channel_id, callback, error_callback) {
+    getChannelMessages:function(channel_id, callback, error_callback, force_get) {
+      console.log("## d1");
       var cache = cached_map[channel_id];
-      if (cache) {
+      if (cache && !force_get) {
         console.log("using cache");
         callback(cache);
         return;
       }
+      console.log("## d2");
       var url = url_prefix + channel_message_url;
       var p = new Object;
       p.c = channel_id;
@@ -270,8 +272,10 @@ angular.module('starter.services', ['starter.user_service'])
         else
           throw "uuid is null, User.setConfig need to be called upon entering";
       }
+      console.log("## d3");
       $http.get(url, {params:p}).success(function(data){
         cached_map[channel_id] = data;
+        console.log("## d4");
         callback(data);
       }).error(function(data, status) {
         if (debug==1) {
@@ -287,6 +291,9 @@ angular.module('starter.services', ['starter.user_service'])
         console.log("error in calling " + url + " data=" + data + " status=" + status);
         error_callback && error_callback(data, status);
       })
+    },
+    clearCache:function(channel) {
+      cached_map[channel.id] = null;
     },
     setRead:function(message) {
       if (message.last_read==null) {
@@ -323,13 +330,13 @@ angular.module('starter.services', ['starter.user_service'])
         }
       }
     },
-    getMore: function(cache, callback, error_callback) {
+    getMore: function(channel, callback, error_callback) {
       console.log("## a2");
-      var last_id = cache.messages[cache.messages.length-1].id;
+      var last_id = channel.messages[channel.messages.length-1].id;
       console.log("## a3 last_id=" + last_id);
       var url = url_prefix + channel_more_message_url;
       var p = new Object;
-      p.c = cache.channel.id;
+      p.c = channel.id;
       p.last_id = last_id;
       p.uuid = User.getUuid();
       if (p.uuid==null) {

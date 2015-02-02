@@ -3,37 +3,60 @@ angular.module('starter.controllers', ['starter.services'])
 .controller('TabCtrl', function($scope, Audio, Notice, $rootScope, $ionicLoading) {
 
   $rootScope.statusbar = { show:false, message:null };
-  $rootScope.channels = [];
+  $rootScope.channels = [];  // used by tab.message (MessageCtrl)
   $rootScope.badge = {
      quiz:0,
      message:0
-  }
-  $rootScope.msg_cache = {
-     channel:null,
-     messages:null
-  }
+  };
+  $rootScope.cur_page = {
+     state:'',
+     channel_id:0
+  };
+
+  $rootScope.cur_channel = {
+    messages:null
+  };
 
   $rootScope.receiveNewMessage = function() {
     $rootScope.statusbar.message = "收到新的通知！";
     $rootScope.statusbar.show = true;
+    $rootScope.refreshChannels(function(diff_channels) {
+      for (var i = 0; i < diff_channels.length; i++) {
+        // 更新新通知的 cache (最后传 true 就是
+        var diff_id = diff_channels[i].id;
+        Notice.getChannelMessages(diff_id, function(cache) {
+          // 如果刚好现在的页面就是这个channel的message页
+          console.log("### xyztuv");
+          var t1 = ($rootScope.cur_page.state == 'tab.message-channel');
+          console.log("## t1=" + t1);
+          var a = $rootScope.cur_page.channel_id;
+          console.log("## t1.1=" + t1);
+          var b = diff_id;
+          console.log("## t1.2=" + t1);
+          var t2 = (a==b);
+          console.log("## t2=" + t2);
+          if (t1 && t2) {
+            console.log("### 123456");
+            console.log("### in here channel id=" + diff_id);
+            for (var j=0; j<$rootScope.channels.length; j++) {
+              if ($rootScope.channels[j].id == diff_id) {
+                $rootScope.channels[j].messages = cache.messages;
+                $rootScope.cur_channel.messages = cache.messages;
+                $rootScope.$apply();
+              }
+            }
+          }
+          else {
+            console.log("### abcdef");
+          }
+        }, null, true /*force to server*/);
+      }
+    });
     setTimeout(function() {
       $rootScope.statusbar.show = false;
       $rootScope.$apply();
     }, 6000)
-
-    //var _counter = 0;
-    //var timer = setInterval(function(){
-    //  if ($rootScope.badgestyle=='badge-stable') {
-    //    $rootScope.badgestyle='badge-assertive';
-    //  }
-    //  else {
-    //    $rootScope.badgestyle='badge-stable';
-    //  }
-    //  $rootScope.$apply();
-    //  if (++_counter % 20==0)
-    //    clearInterval(timer);
-    //},400)
-  }
+  };
 
   $rootScope.decreaseChannelUnread = function(channel_id) {
      for (var i=0; i<$rootScope.channels.length; i++) {
@@ -45,28 +68,47 @@ angular.module('starter.controllers', ['starter.services'])
          break;
        }
      }
-  }
+  };
 
-  $rootScope.$on('$ionicView.enter', function(){
+  $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams){
     Audio.stop();
+    console.log("##state=" + JSON.stringify(toState) + "params=" + JSON.stringify(toParams));
+    $rootScope.cur_page.state = toState.name;
+    if (toState.name=='tab.message-channel') {
+      $rootScope.cur_page.channel_id = toParams.channelId;
+    }
   })
 
-  $rootScope.refreshChannels = function() {
+  $rootScope.refreshChannels = function(callback) {
+    var org_unread_map = new Array;
+    console.log("##a1");
+    for (var i=0; i<$rootScope.channels.length; i++) {
+      var c = $rootScope.channels[i];
+      org_unread_map[c.id] = c.unread;
+    }
+    var diffs = new Array;
+    console.log("##a2");
     Notice.getChannels(function(channels){
       $rootScope.channels = channels;
       var unread = 0;
       for(var i=0;i<channels.length; i++) {
         unread += channels[i].unread;
+        var org_unread = org_unread_map[channels[i].id];
+        console.log(channels[i].subtitle + " org_unread=" + org_unread + " unread=" + channels[i].unread)
+        if (org_unread!=channels[i].unread) {
+          diffs.push(channels[i]);
+        }
       }
       $rootScope.badge.message = unread;
       $rootScope.hideLoading();
       $rootScope.$broadcast('scroll.refreshComplete');
+      callback && callback(diffs);
     },
     function error(data, status) {
       $rootScope.hideLoading();
       $rootScope.$broadcast('scroll.refreshComplete');
     });
-  }
+  };
 
   $rootScope.showLoading = function() {
     $ionicLoading.show({
@@ -93,7 +135,7 @@ angular.module('starter.controllers', ['starter.services'])
 .controller('QuizCtrl', function($scope, $rootScope, $http, Quiz) {
   Quiz.all(function(quizzes) {
       $scope.quizzes = quizzes;
-  })
+  });
 
   $scope.$on('$ionicView.loaded', function(){
     // 一開始進來更新下，這裡QuizCtrl 作為進來第一個view
@@ -151,12 +193,12 @@ angular.module('starter.controllers', ['starter.services'])
       playStatus = 1;
     }
     console.log("## playStatus=" + playStatus);
-  }
+  };
 
   var is_dragging = false;
   $scope.onDrag = function() {
     is_dragging = true;
-  }
+  };
 
   $scope.onRelease = function(e) {
     is_dragging = false;
@@ -177,7 +219,7 @@ angular.module('starter.controllers', ['starter.services'])
     }
     var msecs = my_duration * ratio * 1000;
     Audio.seek(msecs);
-  }
+  };
 
   $scope.stop = function() {
     Audio.stop();
@@ -186,7 +228,7 @@ angular.module('starter.controllers', ['starter.services'])
       $scope.progress.play = 0;
       $scope.$apply();
     },100);
-  }
+  };
 
   var my_duration = 0;
   $scope.play = function(src) {
@@ -207,7 +249,7 @@ angular.module('starter.controllers', ['starter.services'])
       playStatus = 0;
       $scope.$apply();
     });
-  }
+  };
 
   // recording below
   var recording = null;
@@ -230,7 +272,7 @@ angular.module('starter.controllers', ['starter.services'])
     // Record audio
     recording.startRecord();
     $scope.record_state = "recording";
-  }
+  };
 
   $scope.stopRecord = function () {
     if (recording==null)
@@ -238,7 +280,7 @@ angular.module('starter.controllers', ['starter.services'])
     recording.stopRecord();
     recording = null;
     $scope.record_state = "recorded";
-  }
+  };
   //
   $scope.playRecord = function() {
     if (recording!=null || last_recording.length==0) {
@@ -250,35 +292,35 @@ angular.module('starter.controllers', ['starter.services'])
       $scope.$apply();
     });
     $scope.record_state = "playing";
-  }
+  };
 
   $scope.pausePlay = function() {
     Audio.pause();
     $scope.record_state = "paused";
-  }
+  };
 
   $scope.resumePlay = function() {
     Audio.resume();
     $scope.record_state = "playing";
-  }
+  };
 
   $scope.stopPlay = function() {
     Audio.stop();
     $scope.record_state = "recorded";
-  }
+  };
 
   $scope.uploadRecord = function() {
     var success = function (r) {
       console.log("Code = " + r.responseCode);
       console.log("Response = " + r.response);
       console.log("Sent = " + r.bytesSent);
-    }
+    };
 
     var fail = function (error) {
       alert("An error has occurred: Code = " + error.code);
       console.log("upload error source " + error.source);
       console.log("upload error target " + error.target);
-    }
+    };
 
     var options = new FileUploadOptions();
     options.fileKey = "file";
@@ -309,7 +351,7 @@ angular.module('starter.controllers', ['starter.services'])
 
 })
 
-.controller('MessageCtrl', function($scope, $rootScope, Notice, Audio) {
+.controller('MessageCtrl', function($scope, $rootScope) {
 
   $scope.doRefresh = function() {
     $rootScope.refreshChannels();
@@ -318,28 +360,19 @@ angular.module('starter.controllers', ['starter.services'])
 })
 
 .controller('ChannelDetailCtrl', function($scope, $ionicLoading, $rootScope, $stateParams, Notice) {
-
-  //$scope.$on('$ionicView.loaded', function(){
-  //  $rootScope.showLoading();
-  //  Notice.getChannelMessages($stateParams.channelId, function(cache){
-  //    $rootScope.msg_cache = cache;
-  //    console.log("111 msg_cache=" + JSON.stringify($rootScope.msg_cache));
-  //    $rootScope.hideLoading();
-  //  },
-  //  function error(data, status) {
-  //    alert("error in getChannelMessages");
-  //    $rootScope.hideLoading();
-  //  })
-  //})
-
   $scope.hasMore = true;
   $scope.loadMore = function() {
-    console.log("#1 channel_id=" + $stateParams.channelId + " $scope.cache=" + $scope.cache);
-    if ($scope.cache==null) {
+    for (var i=0; i<$rootScope.channels.length; i++) {
+       if ($rootScope.channels[i].id==$stateParams.channelId)
+         $rootScope.cur_channel = $rootScope.channels[i];
+    }
+
+    if ($rootScope.cur_channel.messages==null) {
       $rootScope.showLoading();
+      console.log("## b3");
       Notice.getChannelMessages($stateParams.channelId, function(cache){
-        $scope.cache = cache;
-        console.log("111 cache=" + JSON.stringify(cache));
+        console.log("## b4");
+        $rootScope.cur_channel.messages = cache.messages;
         $rootScope.hideLoading();
         $scope.$broadcast('scroll.infiniteScrollComplete');
       },
@@ -349,20 +382,21 @@ angular.module('starter.controllers', ['starter.services'])
       })
     }
     else {
-      Notice.getMore($scope.cache, function(more_messages) {
+      console.log("## b5");
+      Notice.getMore($rootScope.cur_channel, function(more_messages) {
+        console.log("## b6");
         if (more_messages.length==0) {
           $scope.hasMore = false;
           return;
         }
         for (var i=0; i<more_messages.length; i++)
-          $scope.cache.messages.push(more_messages[i]);
+          $rootScope.cur_channel.messages.push(more_messages[i]);
         $scope.$broadcast('scroll.infiniteScrollComplete');
       },
       function error() {
         alert("error in getMore");
       })
     }
-
   }
 })
 
@@ -385,7 +419,7 @@ angular.module('starter.controllers', ['starter.services'])
     $rootScope.receiveNewMessage();
   }
 
-})
+});
 
 
 
