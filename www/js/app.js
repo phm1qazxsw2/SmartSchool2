@@ -56,6 +56,15 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
 
     if (window.plugins && window.plugins.jPushPlugin) {
 
+      window.plugins.jPushPlugin.openNotificationInAndroidCallback = function(data) {
+        console.log("##### here 123");
+        window.messageCallback(JSON.parse(data));
+      }
+      window.plugins.jPushPlugin.receiveMessageInAndroidCallback = function(data) {
+        console.log("##### here 456 data=" + data);
+        window.messageCallback(JSON.parse(data));
+      }
+
       window.plugins.jPushPlugin.init();
       window.plugins.jPushPlugin.setDebugMode(true);
       window.plugins.jPushPlugin.getRegistrationID(function(data){
@@ -194,7 +203,9 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
 });
 
 window.messageCallback = function(data){
-  if (data && data.aps) {
+  console.log("#data="+data);
+  console.log("#data.extras=" + data.extras);
+  if (data && (data.aps || data.extras) ) {
     console.log("in message callback1");
     var $body = angular.element(document.body);
     var $rootScope = $body.scope().$root;

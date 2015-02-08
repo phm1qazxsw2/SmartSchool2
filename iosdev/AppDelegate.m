@@ -158,6 +158,22 @@
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     // Required
     [APService handleRemoteNotification:userInfo];
+    
+    //#########
+    NSError  *error;
+    NSData   *jsonData   = [NSJSONSerialization dataWithJSONObject:userInfo options:0 error:&error];
+    NSString *jsonString = [[NSString alloc]initWithData:jsonData encoding:NSUTF8StringEncoding];
+    NSLog(@"in didReceiveRemoteNotification%@",jsonString);
+    
+    NSString *tmp = [NSString stringWithFormat:@"messageCallback(%@)",jsonString];
+    
+    @try {
+        [self.viewController.webView stringByEvaluatingJavaScriptFromString:tmp];
+    }
+    @catch (id theException) {
+        NSLog(@"%@", theException);
+    }
+    //#########
 }
 
 - (void)                                 application:(UIApplication*)application

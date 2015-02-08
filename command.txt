@@ -1,0 +1,5 @@
+ionic build -release android
+
+keytool -genkey -v -keystore my-release-key.keystore -alias android_smartschool -keyalg RSA -keysize 2048 -validity 10000
+
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore androiddev/my-release-key.keystore /Users/peterlin/Documents/new_workspace/SmartSchool2/platforms/android/ant-build/CordovaApp-release-unsigned.apk android_smartschool
