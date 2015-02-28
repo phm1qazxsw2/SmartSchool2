@@ -4,27 +4,91 @@
     display: none !important;
 }
 
+/*.bar.bar-loading {*/
+    /*display: block;*/
+    /*font-size:17px;*/
+    /*height: 40px;*/
+    /*position: absolute !important;*/
+    /*top: 0 !important;*/
+    /*width: 130px !important;*/
+    /*text-align: center;*/
+    /*padding: 0;*/
+    /*line-height: 60px;*/
+    /* transition 'sliding down' (check below)*/
+    /*-webkit-transition: 200ms all;*/
+/*}*/
+/* make loading bar slide up/down */
+
+/*.bar-loading.ng-enter,*/
+/*.bar-loading.ng-leave.ng-leave-active {*/
+    /*opacity: 1;*/
+/*}*/
+/*.bar-loading.ng-enter.ng-enter-active,*/
+/*.bar-loading.ng-leave {*/
+    /*opacity: 1;*/
+/*}*/
+
+.record-item {
+    padding-left:27px
+}
+
+/*.bar.bar-loading {*/
+    /*display: block;*/
+    /*height: 24px;*/
+
+    /* starts right below a normal header */
+    /*top: 44px;*/
+
+    /* make the text centered vertically and horizontally */
+    /*text-align: center;*/
+    /*padding: 0;*/
+    /*line-height: 24px;*/
+
+    /* transition 'sliding down' (check below)*/
+    /*-webkit-transition: 200ms all;*/
+/*}*/
+
 .bar.bar-loading {
     display: block;
-    font-size:17px;
-    height: 40px;
-    position: absolute !important;
-    top: 0 !important;
-    width: 130px !important;
+    height: 24px;
+
+    /* starts right below a normal header */
+    top: 44px;
+
+    /* make the text centered vertically and horizontally */
     text-align: center;
     padding: 0;
-    line-height: 60px;
+    line-height: 24px;
+
     /* transition 'sliding down' (check below)*/
     -webkit-transition: 200ms all;
 }
-/* make loading bar slide up/down */
 
+
+/*
+ * make the content's top changes animate.
+ * might not always look good, but looks
+ * good when our loader is added & removed
+ */
+.has-header {
+    -webkit-transition: 200ms top;
+}
+.has-header.has-loading {
+    /* 44px (header) + 24px */
+    top: 68px;
+}
+
+/* make loading bar slide up/down */
 .bar-loading.ng-enter,
 .bar-loading.ng-leave.ng-leave-active {
-    opacity: 1;
+    height: 0;
+    border-width: 0px;
 }
 .bar-loading.ng-enter.ng-enter-active,
 .bar-loading.ng-leave {
-    opacity: 1;
+    height: 24px;
+    border-width: 1px;
 }
+
+
 

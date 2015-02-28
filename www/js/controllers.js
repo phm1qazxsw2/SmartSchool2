@@ -1,6 +1,8 @@
+
+
 angular.module('starter.controllers', ['starter.services'])
 
-.controller('TabCtrl', function($scope, Audio, Notice, $rootScope, $ionicLoading) {
+.controller('RootCtrl', function($scope, $state, Audio, Notice, $rootScope, $ionicLoading, Network, User) {
 
   $rootScope.statusbar = { show:false, message:null };
   $rootScope.channels = [];  // used by tab.message (MessageCtrl)
@@ -16,6 +18,36 @@ angular.module('starter.controllers', ['starter.services'])
   $rootScope.cur_channel = {
     messages:null
   };
+
+  $rootScope.initPush = function() {
+    window.plugins.jPushPlugin.init();
+    window.plugins.jPushPlugin.setDebugMode(true);
+    window.plugins.jPushPlugin.getRegistrationID(function(data){
+      try{
+        console.log("## 4 registrationID=" + data + "#");
+        Network.check(function netok() {
+          console.log("## 4.1 network ok, calling /user/setconfig");
+          User.setConfig({
+                uuid:ionic.Platform.device().uuid,
+                jpush_id:data,
+                phone:null
+              },
+              function success() {
+                console.log("successfully calling front/user/set");
+              },
+              function error(data) {
+                console.log("error calling setuser : " + data + " status=" + status);
+                $rootScope.showError((data)?data:{code:'f003', error:'setuser not available'});
+              })
+        }, function netfail() {
+          $rootScope.showError(network_err);
+        })
+      }
+      catch(exception){
+        console.log("## 5 " + exception);
+      }
+    });
+  }
 
   $rootScope.receiveNewMessage = function() {
     $rootScope.statusbar.message = "收到新的通知！";
@@ -60,16 +92,68 @@ angular.module('starter.controllers', ['starter.services'])
      }
   };
 
+  $rootScope.showError = function (errobj) {
+    if (!errobj || !errobj.code)
+      errobj = { code:'x999' };
+
+    if (errobj.code=='e001') {
+      alert('Network is down!');
+    }
+    else if (errobj.code=='e002') {
+      alert("Cannot play, not finish recording yet");
+    }
+    else if (errobj.code=='e003') {
+      alert("Upload error");
+    }
+    else if (errobj.code=='e004') {
+      alert('error:channel message cache is empty');
+    }
+    else if (errobj.code=='e005') {
+      alert('play source is empty');
+    }
+    else if (errobj.code=='e006') {
+      alert("Cannot play, not finish recording yet");
+    }
+    else if (errobj.code=='e007') {
+      alert('error in playing');
+    }
+    else if (errobj.code=='e008') {
+      alert('object not found');
+    }
+    else if (errobj.code=='e999') {
+      alert('Unknown error!');
+    }
+    else if (errobj.code=='f001') {
+      alert('api error: wrong parameter!');
+    }
+    else if (errobj.code=='f002') {
+      alert('api error: user not found!');
+    }
+    else if (errobj.code=='f003') {
+      alert('api error: service not available!');
+    }
+    else if (errobj.code=='f998') {
+      alert('api error: unknown!');
+    }
+    else if (errobj.code=='b998') {
+      alert('server unknown error!');
+    }
+    else {
+      alert('error:' + JSON.stringify(errobj));
+    }
+    return;
+  }
+
   $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams){
     Audio.stop();
-    console.log("##state=" + JSON.stringify(toState) + "params=" + JSON.stringify(toParams));
+    //console.log("##state=" + JSON.stringify(toState) + "params=" + JSON.stringify(toParams));
     $rootScope.cur_page.state = toState.name;
     if (toState.name=='tab.message-channel') {
       $rootScope.cur_page.channel_id = toParams.channelId;
     }
   })
 
-  $rootScope.refreshChannels = function(callback) {
+  $rootScope.refreshChannels = function(callback, error_cb) {
     var org_unread_map = new Array;
     for (var i=0; i<$rootScope.channels.length; i++) {
       var c = $rootScope.channels[i];
@@ -82,7 +166,7 @@ angular.module('starter.controllers', ['starter.services'])
       for(var i=0;i<channels.length; i++) {
         unread += channels[i].unread;
         var org_unread = org_unread_map[channels[i].id];
-        console.log(channels[i].subtitle + " org_unread=" + org_unread + " unread=" + channels[i].unread)
+        //console.log(channels[i].subtitle + " org_unread=" + org_unread + " unread=" + channels[i].unread)
         if (org_unread!=channels[i].unread) {
           diffs.push(channels[i]);
         }
@@ -95,6 +179,7 @@ angular.module('starter.controllers', ['starter.services'])
     function error(data, status) {
       $rootScope.hideLoading();
       $rootScope.$broadcast('scroll.refreshComplete');
+      error_cb && error_cb(data);
     });
   };
 
@@ -102,12 +187,16 @@ angular.module('starter.controllers', ['starter.services'])
     $ionicLoading.show({
       template: 'Loading...'
     });
+    setTimeout(function(){
+      $rootScope.hideLoading();
+    },5000)
   };
   $rootScope.hideLoading = function(){
     $ionicLoading.hide();
   };
 
   $rootScope.badgestyle = 'badge-assertive';
+  console.log("##in RootCtrl");
 })
 
 .controller('SignInCtrl', function($scope, $state) {
@@ -127,6 +216,7 @@ angular.module('starter.controllers', ['starter.services'])
 
   $scope.$on('$ionicView.loaded', function(){
     // 一開始進來更新下，這裡QuizCtrl 作為進來第一個view
+    $rootScope.initPush();
     setTimeout(function(){$rootScope.refreshChannels();},1);
   })
 })
@@ -147,7 +237,7 @@ angular.module('starter.controllers', ['starter.services'])
 })
 
 .controller('QuizDetailCtrl', function($scope, $ionicPlatform, $ionicLoading, $stateParams,
-                                       Quiz, Audio) {
+                                       Quiz, Audio, Record, $rootScope) {
 
   // $scope.pageTitle = pageTitle;
   Quiz.get($stateParams.quizId, function(quiz) {
@@ -156,7 +246,10 @@ angular.module('starter.controllers', ['starter.services'])
     $scope.play_style = 'ion-play';
 
     $scope.record_style = 'ion-record';
-    $scope.record_state = "init";
+    if (quiz.status==0 || quiz.status==1)
+      $scope.record_state = "init";
+    else if (quiz.status==2 || quiz.status==3)
+      $scope.record_state = "recorded";
   });
 
   $scope.$on("$destroy", function(){
@@ -235,7 +328,11 @@ angular.module('starter.controllers', ['starter.services'])
       $scope.progress.play = 0;
       $scope.play_style = 'ion-play';
       playStatus = 0;
+      Quiz.setPlayed($scope.quiz);
       $scope.$apply();
+    },
+    function error(err) {
+      $rootScope.showError(err);
     });
   };
 
@@ -243,41 +340,32 @@ angular.module('starter.controllers', ['starter.services'])
   var recording = null;
   var last_recording = "";
   $scope.startRecord = function () {
-    console.log("#r1");
-    var path = "cdvfile://localhost/persistent/myrecording.wav";
-    recording = new Media(path,
-        // success callback
-        function() {
-          console.log("recordAudio():Audio Success");
-          last_recording = path;
-        },
-        // error callback
-        function(err) {
-          console.log("recordAudio():Audio Error: "+ err.code);
-        }
-    );
-
-    // Record audio
-    recording.startRecord();
+    Record.record(
+      $scope.quiz,
+      function success() {},
+      function error(err) {
+        $rootScope.showError(err);
+    });
     $scope.record_state = "recording";
   };
 
   $scope.stopRecord = function () {
-    if (recording==null)
-      return;
-    recording.stopRecord();
-    recording = null;
+    Record.stop();
     $scope.record_state = "recorded";
+    Quiz.setRecorded($scope.quiz);
+  };
+
+  $scope.redoRecord = function () {
+    $scope.record_state = "init";
   };
   //
   $scope.playRecord = function() {
-    if (recording!=null || last_recording.length==0) {
-      alert("Cannot play, not finish recording yet");
-      return;
-    }
-    Audio.play(last_recording, null, null, function finish() {
+    Record.play($scope.quiz, null, null, function finish() {
       $scope.record_state = "recorded";
       $scope.$apply();
+    },
+    function error(err){
+      $rootScope.showError(err);
     });
     $scope.record_state = "playing";
   };
@@ -298,81 +386,77 @@ angular.module('starter.controllers', ['starter.services'])
   };
 
   $scope.uploadRecord = function() {
-    var success = function (r) {
-      console.log("Code = " + r.responseCode);
-      console.log("Response = " + r.response);
-      console.log("Sent = " + r.bytesSent);
-    };
-
-    var fail = function (error) {
-      alert("An error has occurred: Code = " + error.code);
-      console.log("upload error source " + error.source);
-      console.log("upload error target " + error.target);
-    };
-
-    var options = new FileUploadOptions();
-    options.fileKey = "file";
-    options.fileName = "myrecording.wav";
-    options.mimeType = "audio/vnd.wav";
-
-    var params = {};
-    params.value1 = "test";
-    params.value2 = "param";
-
-    options.params = params;
-
-    var fileURL = 'cdvfile://localhost/persistent/myrecording.wav';
-    var ft = new FileTransfer();
-    ft.onprogress = function(progressEvent) {
-      console.log("#3");
-      if (progressEvent.lengthComputable) {
-        $scope.uploadstatus = ((progressEvent.loaded * 100) / progressEvent.total) + '% uploaded';
-      } else {
-        $scope.uploadstatus = 'uploading ...'
+    console.log("### in uploadRecord");
+    var per = 0;
+    $rootScope.statusbar.message = '上傳中 0%';
+    $rootScope.statusbar.show = true;
+    var int = setInterval(function(){
+      per += 20;
+      if (per>100) {
+        $rootScope.statusbar.show = false;
+        per = 0;
+        clearInterval(int);
       }
-      $scope.$apply();
-    };
-    console.log("#1");
-    ft.upload(fileURL, encodeURI("http://localhost:8080/wct_cms/test.jsp"), success, fail, options);
-    console.log("#2");
+      else {
+        $rootScope.statusbar.message = '上傳中 ' + per + '%';
+      }
+      $rootScope.$apply();
+    },1000);
+    //Record.upload($scope.quiz, function success() {
+    //
+    //},
+    //function error() {
+    //
+    //},
+    //function progress(p) {
+    //
+    //})
   }
 
 })
 
 .controller('MessageCtrl', function($scope, $rootScope) {
-
   $scope.doRefresh = function() {
-    $rootScope.refreshChannels();
+    $rootScope.refreshChannels(function success(diff_channels) {
+      for (var i=0; i<diff_channels.length; i++) {
+        Notice.clearCacheByChannelId(diff_channels[i].id);
+      }
+    },
+    function error(err) {
+      $rootScope.showError(err);
+    });
   }
-
 })
 
 .controller('ChannelDetailCtrl', function($scope, $ionicLoading, $rootScope, $stateParams, Notice) {
+  for (var i=0; i<$rootScope.channels.length; i++) {
+    if ($rootScope.channels[i].id==$stateParams.channelId)
+      $rootScope.cur_channel = $rootScope.channels[i];
+  }
+
+  $scope.doRefresh = function() {
+    $rootScope.cur_channel.messages = null;
+    $scope.loadMore();
+  }
+
   $scope.hasMore = true;
   $scope.loadMore = function() {
-    for (var i=0; i<$rootScope.channels.length; i++) {
-       if ($rootScope.channels[i].id==$stateParams.channelId)
-         $rootScope.cur_channel = $rootScope.channels[i];
-    }
-
     if ($rootScope.cur_channel.messages==null) {
       $rootScope.showLoading();
-      console.log("## b3");
+      Notice.clearCacheByChannelId($stateParams.channelId);
       Notice.getChannelMessages($stateParams.channelId, function(cache){
-        console.log("## b4");
         $rootScope.cur_channel.messages = cache.messages;
         $rootScope.hideLoading();
+        $rootScope.$broadcast('scroll.refreshComplete'); //下拉trigger loadMore，need to broadcast refreshcomplete
         $scope.$broadcast('scroll.infiniteScrollComplete');
       },
       function error(data, status) {
-        alert("error in getChannelMessages");
         $rootScope.hideLoading();
+        $rootScope.showError(data);
       })
     }
     else {
-      console.log("## b5");
       Notice.getMore($rootScope.cur_channel, function(more_messages) {
-        console.log("## b6");
         if (more_messages.length==0) {
           $scope.hasMore = false;
           return;
@@ -381,20 +465,23 @@ angular.module('starter.controllers', ['starter.services'])
           $rootScope.cur_channel.messages.push(more_messages[i]);
         $scope.$broadcast('scroll.infiniteScrollComplete');
       },
-      function error() {
-        alert("error in getMore");
+      function error(data) {
+        $rootScope.showError(data);
       })
     }
   }
 })
 
 .controller('MessageDetailCtrl', function($scope, $stateParams, $rootScope, Notice) {
-  Notice.getMessage($stateParams.channelId, $stateParams.messageId, function(message) {
+  Notice.getMessage($stateParams.channelId, $stateParams.messageId, function success(message) {
     $scope.message = message;
     if (message.last_read==null) {
       Notice.setRead(message);
       $rootScope.decreaseChannelUnread($stateParams.channelId);
     }
+  },
+  function error(data) {
+    $rootScope.showError(data);
   });
 })
 
@@ -404,10 +491,13 @@ angular.module('starter.controllers', ['starter.services'])
   };
 
   $scope.testEffect = function() {
-    $rootScope.receiveNewMessage();
+    $rootScope.statusbar.message = '12345';
+    $rootScope.statusbar.show = true;
+    setTimeout(function(){
+      $rootScope.statusbar.show = false;
+      $rootScope.$apply();
+    },1000)
+    //$dialogs.error("Test");
   }
 
 });
-
-
-

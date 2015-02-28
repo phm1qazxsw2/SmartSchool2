@@ -1,14 +1,19 @@
 <ion-view view-title="Messages">
-  <ion-content>
+  <ion-content ng-class="{'has-loading': statusbar.show}">
+    <ion-refresher
+          pulling-text="下拉刷新中..."
+          on-refresh="doRefresh()">
+    </ion-refresher>
     <ion-list>
       <ion-item class="item-remove-animate item-icon-left item-icon-right"
                 ng-repeat="message in cur_channel.messages track by $index"
                 type="item-text-wrap" href="#/tab/message/{{cur_channel.id}}/{{message.id}}">
-        <i class="icon positive ion-chatbubble" ng-if="message.last_read==null"></i>
+        <i class="icon positive ion-email" ng-if="message.last_read==null"></i>
+        <i class="icon dark ion-checkmark-circled" ng-if="message.last_read!=null"></i>
         <h2>
           {{message.title}} ...
         </h2>
-        {{message.created}}
+        <div class="small-font">{{message.created}}</div>
         <i class="icon ion-chevron-right icon-accessory"></i>
       </ion-item>
     </ion-list>

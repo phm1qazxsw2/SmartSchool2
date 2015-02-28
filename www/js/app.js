@@ -1,3 +1,4 @@
+
 angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], function($httpProvider) {
   // Use x-www-form-urlencoded Content-Type
   $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
@@ -44,14 +45,16 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
   }];
 })
 
-
-.run(function($ionicPlatform, User) {
+.run(function($ionicPlatform, $rootScope, User, Network) {
 
     $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
     if (window.cordova && window.cordova.plugins.Keyboard) {
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
+    }
+    if(window.StatusBar) {
+      StatusBar.styleDefault();
     }
 
     if (window.plugins && window.plugins.jPushPlugin) {
@@ -64,31 +67,6 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
         console.log("##### here 456 data=" + data);
         window.messageCallback(JSON.parse(data));
       }
-
-      window.plugins.jPushPlugin.init();
-      window.plugins.jPushPlugin.setDebugMode(true);
-      window.plugins.jPushPlugin.getRegistrationID(function(data){
-        try{
-          console.log("## 4 registrationID=" + data + "#");
-
-          User.setConfig({
-            uuid:ionic.Platform.device().uuid,
-            jpush_id:data,
-            phone:null
-          },
-          function success() {
-            console.log("successfully calling front/user/set");
-          },
-          function error(data, status) {
-            console.log("error calling setuser : " + data + " status=" + status);
-          })
-        }
-        catch(exception){
-          console.log("## 5");
-          console.log(exception);
-        }
-      });
-      console.log("device=" + JSON.stringify(ionic.Platform.device().uuid));
     }
   });
 })
@@ -101,18 +79,27 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
   // Each state's controller can be found in controllers.js
   $stateProvider
 
-  // setup an abstract state for the tabs directive
-  .state('tab', {
-    url: "/tab",
-    abstract: true,
-    templateUrl: "templates/tabs.html",
-    controller:'TabCtrl'
+  .state('main', {
+    url: '/main',
+    controller:'RootCtrl'
+  })
+
+  .state('intro', {
+    url: '/intro',
+    templateUrl:'templates/intro.html'
   })
 
   .state('signin', {
     url: '/signin',
     templateUrl:'templates/signin.html',
     controller:'SignInCtrl'
+  })
+
+  // setup an abstract state for the tabs directive
+  .state('tab', {
+    url: "/tab",
+    abstract: true,
+    templateUrl: "templates/tabs.html"
   })
 
   .state('tab.quiz', {

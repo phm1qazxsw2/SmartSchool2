@@ -1,6 +1,5 @@
 <ion-view view-title="聽力">
-
-  <ion-content class="padding">
+  <ion-content class="padding" ng-class="{'has-loading': statusbar.show}">
 
     <div class="list card">
 
@@ -16,7 +15,7 @@
         </div>
       </div>
 
-      <div class="item">
+      <div class="item record-item">
         <a class="ng-cloak button-icon positive icon ion-mic-c" ng-cloak ng-show="record_state=='init'" ng-click="startRecord()"> 錄音</a>
         <a class="ng-cloak button-icon assertive icon ion-record" ng-cloak ng-show="record_state=='recording'" ng-click="stopRecord()"> 停止</a>
         <a class="ng-cloak button-icon positive icon ion-play" ng-cloak ng-show="record_state=='recorded'" ng-click="playRecord()"> 播放</a>
@@ -24,7 +23,7 @@
         <a class="ng-cloak button-icon dark icon ion-play" ng-cloak ng-show="record_state=='paused'" ng-click="resumePlay()"> 續播</a>
         <a class="ng-cloak button-icon dark icon ion-stop" ng-cloak ng-show="record_state=='playing' || record_state=='paused'" ng-click="stopPlay()"> 停止</a>
         <a class="ng-cloak button-icon calm icon ion-upload" ng-cloak ng-show="record_state=='recorded'" ng-click="uploadRecord()"> 上傳</a>
-        <a class="ng-cloak button-icon dark icon ion-refresh" ng-cloak ng-show="record_state=='recorded'" ng-click="deleteRecord()"> 重錄</a>
+        <a class="ng-cloak button-icon dark icon ion-refresh" ng-cloak ng-show="record_state=='recorded'" ng-click="redoRecord()"> 重錄</a>
       </div>
 
       <div class="item item-text-wrap">

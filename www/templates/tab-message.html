@@ -1,20 +1,21 @@
 <ion-view view-title="通知">
-  <ion-content>
+  <ion-content ng-class="{'has-loading': statusbar.show}">
     <ion-refresher
           pulling-text="下拉刷新中..."
           on-refresh="doRefresh()">
     </ion-refresher>
     <ion-list>
-      <ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="channel in channels"
+      <ion-item class="item-remove-animate item-avatar-left item-icon-right" ng-repeat="channel in channels"
                 type="item-text-wrap" href="#/tab/message/{{channel.id}}">
         <img ng-src="{{channel.icon}}">
         <h2>
             {{channel.title1}}
         </h2>
-          {{channel.title2}}
+        {{channel.title2}}
         <span class="badge badge-assertive" ng-if="channel.unread>0">{{channel.unread}}</span>
         <i class="icon ion-chevron-right icon-accessory"></i>
       </ion-item>
     </ion-list>
+    <div ng-if="channels.length==0">尚未取得信息，请下拉刷新</div>
   </ion-content>
 </ion-view>

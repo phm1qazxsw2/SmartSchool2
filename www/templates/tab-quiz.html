@@ -1,14 +1,17 @@
 <ion-view view-title="錄音作業">
-  <ion-content>
+  <ion-content ng-class="{'has-loading': statusbar.show}">
     <ion-list>
-      <ion-item class="item-remove-animate item-avatar item-icon-right"
+      <ion-item class="item-remove-animate item-icon-left item-icon-right"
                 ng-repeat="quiz in quizzes" type="item-text-wrap" href="#/tab/quiz/{{quiz.id}}">
-          <img ng-src="{{quiz.icon}}">
+          <!--<img ng-src="{{quiz.icon}}">-->
+          <i class="icon assertive ion-battery-empty" ng-if="quiz.status==0"></i>
+          <i class="icon positive ion-battery-low" ng-if="quiz.status==1"></i>
+          <i class="icon calm ion-battery-half" ng-if="quiz.status==2"></i>
+          <i class="icon balanced ion-battery-full" ng-if="quiz.status==3"></i>
           <h2>{{quiz.title}}</h2>
-          {{quiz.status}}
           <i class="icon ion-chevron-right icon-accessory"></i>
-          <ion-option-button class="button-assertive" ng-click="remove(quiz)" ng-if="quiz.status=='archived'">
-            Delete
+          <ion-option-button class="button-assertive" ng-click="remove(quiz)" ng-if="quiz.status==3">
+            Hide
           </ion-option-button>
       </ion-item>
     </ion-list>
