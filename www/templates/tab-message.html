@@ -1,21 +1,36 @@
 <ion-view view-title="通知">
+  <ion-nav-bar class="bar-calm"></ion-nav-bar>
   <ion-content ng-class="{'has-loading': statusbar.show}">
     <ion-refresher
           pulling-text="下拉刷新中..."
           on-refresh="doRefresh()">
     </ion-refresher>
     <ion-list>
-      <ion-item class="item-remove-animate item-avatar-left item-icon-right" ng-repeat="channel in channels"
-                type="item-text-wrap" href="#/tab/message/{{channel.id}}">
-        <img ng-src="{{channel.icon}}">
-        <h2>
-            {{channel.title1}}
-        </h2>
-        {{channel.title2}}
-        <span class="badge badge-assertive" ng-if="channel.unread>0">{{channel.unread}}</span>
+      <ion-item class="item-remove-animate item-avatar-left item-icon-right" ng-repeat="uc in uchannels"
+                type="item-text-wrap" href="#/index_tabs/tab/message/{{uc.ucid}}">
+        <img ng-src="{{uc.icon}}">
+        <div>
+            {{uc.title}}
+            <span>
+                <i>-</i>
+                {{uc.childname}}
+                <i ng-if="uc.role=='parent'">家長</i>
+                <i ng-if="uc.role=='teacher'">老師</i>
+                <i ng-if="uc.role=='student'">學生</i>
+            </span>
+        </div>
+        <div class="preview-message" ng-if="uc.last_message!=null">
+            {{uc.last_message.title | trimTitle}}
+            <span style="float:right" am-time-ago="uc.last_message.time"></span>
+        </div>
+
+        <span class="badge badge-assertive" ng-if="uc.unread>0">{{uc.unread}}</span>
         <i class="icon ion-chevron-right icon-accessory"></i>
       </ion-item>
+        <ion-item class="item-icon-left" ng-if="!first_time && uchannels.length==0">
+            <i class="icon assertive ion-alert"></i>
+            <h2>目前沒有消息，下拉可重新加載</h2>
+        </ion-item>
     </ion-list>
-    <div ng-if="channels.length==0">尚未取得信息，请下拉刷新</div>
   </ion-content>
 </ion-view>

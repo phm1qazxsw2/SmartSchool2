@@ -1,5 +1,8 @@
+var my_ver = 0.9;
 
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], function($httpProvider) {
+var singlepage_app =
+
+angular.module('singlepage_app', ['ionic', 'starter.controllers', 'starter.services', 'angularMoment'], function($httpProvider) {
   // Use x-www-form-urlencoded Content-Type
   $httpProvider.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
 
@@ -45,30 +48,54 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
   }];
 })
 
-.run(function($ionicPlatform, $rootScope, User, Network) {
+.run(function($ionicPlatform, $rootScope, User, amMoment) {
 
     $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
-    if (window.cordova && window.cordova.plugins.Keyboard) {
-      cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
-    }
-    if(window.StatusBar) {
-      StatusBar.styleDefault();
-    }
 
-    if (window.plugins && window.plugins.jPushPlugin) {
+      amMoment.changeLocale('zh-tw');
 
-      window.plugins.jPushPlugin.openNotificationInAndroidCallback = function(data) {
-        console.log("##### here 123");
-        window.messageCallback(JSON.parse(data));
+      in_browser = (ionic.Platform.platform()=="macintel");
+      if (in_browser) {
+        connection_check_url = url_prefix + "/template/school";
       }
-      window.plugins.jPushPlugin.receiveMessageInAndroidCallback = function(data) {
-        console.log("##### here 456 data=" + data);
-        window.messageCallback(JSON.parse(data));
+      console.log("#### x1 in_browser=" + in_browser + " " + ionic.Platform.platform());
+
+      if (window.cordova && window.cordova.plugins.Keyboard) {
+        cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
       }
-    }
-  });
+      if(window.StatusBar) {
+        StatusBar.styleDefault();
+      }
+
+      console.log("#### x2");
+
+      if (window.plugins && window.plugins.jPushPlugin) {
+        window.plugins.jPushPlugin.openNotificationInAndroidCallback = function(data) {
+          console.log("##### here 123");
+          window.messageCallback(JSON.parse(data));
+        }
+        window.plugins.jPushPlugin.receiveMessageInAndroidCallback = function(data) {
+          console.log("##### here 456 data=" + data);
+          window.messageCallback(JSON.parse(data));
+        }
+      }
+
+      console.log("## before call requestFileSystem");
+      try {
+        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function success(fs) {
+          User.configFS(fs);
+          console.log("## fs=" + JSON.stringify(fs));
+        }, function fail(err) {
+          console.log("error calling User.configFS " + JSON.stringify(err));
+        })
+      }
+      catch (e) {
+        if (!in_browser)
+          console.log(e);
+      }
+    });
 })
 
 .config(function($stateProvider, $urlRouterProvider) {
@@ -79,64 +106,30 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
   // Each state's controller can be found in controllers.js
   $stateProvider
 
-  .state('main', {
-    url: '/main',
-    controller:'RootCtrl'
+  .state('login', {
+    url: '/login',
+    templateUrl: url_prefix + '/template/login',
+    controller: "LoginCtrl"
   })
 
-  .state('intro', {
-    url: '/intro',
-    templateUrl:'templates/intro.html'
+  .state('intros', {
+    url: '/intros',
+    templateUrl: "templates/intros.html"
   })
 
-  .state('signin', {
-    url: '/signin',
-    templateUrl:'templates/signin.html',
-    controller:'SignInCtrl'
+  .state('index_tabs', {
+    url: '/index_tabs',
+    templateUrl: "templates/index_tabs.html"
   })
 
   // setup an abstract state for the tabs directive
-  .state('tab', {
+  .state('index_tabs.tab', {
     url: "/tab",
     abstract: true,
-    templateUrl: "templates/tabs.html"
+    templateUrl: url_prefix + '/template/tabs'
   })
 
-  .state('tab.quiz', {
-      url: '/quiz',
-      views: {
-        'tab-quiz': {
-          templateUrl: 'templates/tab-quiz.html',
-          controller: 'QuizCtrl'
-        }
-      }
-    })
-    .state('tab.quiz-detail', {
-      url: '/quiz/:quizId',
-      views: {
-        'tab-quiz': {
-          templateUrl: 'templates/quiz-detail.html',
-          controller: 'QuizDetailCtrl'
-          //,
-          //resolve : {
-          //  pageTitle : function(TitleService) {
-          //    return TitleService.getTitle()
-          //  }
-          //}
-        }
-      }
-    })
-    .state('tab.quiz-record', {
-      url: '/quiz/:quizId/record',
-      views: {
-        'tab-quiz': {
-          templateUrl: 'templates/quiz-record.html',
-          controller: 'QuizRecordCtrl'
-        }
-      }
-    })
-
-  .state('tab.message', {
+  .state('index_tabs.tab.message', {
       url: '/message',
       views: {
         'tab-message': {
@@ -145,8 +138,8 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
         }
       }
     })
-    .state('tab.message-channel', {
-      url: '/message/:channelId',
+    .state('index_tabs.tab.message-channel', {
+      url: '/message/:ucId',
       views: {
         'tab-message': {
           templateUrl: 'templates/channel-detail.html',
@@ -154,8 +147,8 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
         }
       }
     })
-    .state('tab.message-channel-message', {
-      url: '/message/:channelId/:messageId',
+    .state('index_tabs.tab.message-channel-message', {
+      url: '/message/:ucId/:umId',
       views: {
         'tab-message': {
           templateUrl: 'templates/message-detail.html',
@@ -164,29 +157,33 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'], 
       }
     })
 
-  .state('tab.calendar', {
-      url: '/calendar',
+  .state('index_tabs.tab.school', {
+      url: '/school',
       views: {
-        'tab-calendar': {
-          templateUrl: 'templates/tab-calendar.html',
-          controller: 'CalendarCtrl'
+        'tab-school': {
+          templateUrl: url_prefix + '/template/school',
+          controller: 'SchoolCtrl'
         }
       }
     })
 
-  .state('tab.account', {
-    url: '/account',
+  .state('index_tabs.tab.app', {
+    url: '/app',
     views: {
-      'tab-account': {
-        templateUrl: 'templates/tab-account.html',
-        controller: 'AccountCtrl'
+      'tab-app': {
+        templateUrl: url_prefix + '/template/app',
+        controller: 'AppCtrl'
       }
     }
   });
 
   // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/signin');
+  $urlRouterProvider.otherwise('/login');
 
+})
+
+.constant('angularMomentConfig', {
+  timezone: 'Asia/Tokyo' // e.g. 'Europe/London'
 });
 
 window.messageCallback = function(data){

@@ -1,8 +1,8 @@
-<ion-view view-title="錄音作業">
+<ion-view view-title="英文聽力">
   <ion-content ng-class="{'has-loading': statusbar.show}">
     <ion-list>
       <ion-item class="item-remove-animate item-icon-left item-icon-right"
-                ng-repeat="quiz in quizzes" type="item-text-wrap" href="#/tab/quiz/{{quiz.id}}">
+                ng-repeat="quiz in quizzes" type="item-text-wrap" href="#/index_tabs/tab/quiz/{{quiz.id}}">
           <!--<img ng-src="{{quiz.icon}}">-->
           <i class="icon assertive ion-battery-empty" ng-if="quiz.status==0"></i>
           <i class="icon positive ion-battery-low" ng-if="quiz.status==1"></i>
@@ -17,6 +17,5 @@
     </ion-list>
 
     <br/><br/>
-
   </ion-content>
 </ion-view>

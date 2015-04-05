@@ -17,6 +17,7 @@
   "cordovaPlugins": [
     "org.apache.cordova.statusbar",
     "org.apache.cordova.device",
-    "/Users/peterlin/Documents/new_workspace/SmartSchool2/jpush-phonegap-plugin"
+    "/Users/peterlin/Documents/new_workspace/SmartSchool2/jpush-phonegap-plugin",
+    "org.apache.cordova.media"
   ]
 }

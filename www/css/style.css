@@ -4,30 +4,6 @@
     display: none !important;
 }
 
-/*.bar.bar-loading {*/
-    /*display: block;*/
-    /*font-size:17px;*/
-    /*height: 40px;*/
-    /*position: absolute !important;*/
-    /*top: 0 !important;*/
-    /*width: 130px !important;*/
-    /*text-align: center;*/
-    /*padding: 0;*/
-    /*line-height: 60px;*/
-    /* transition 'sliding down' (check below)*/
-    /*-webkit-transition: 200ms all;*/
-/*}*/
-/* make loading bar slide up/down */
-
-/*.bar-loading.ng-enter,*/
-/*.bar-loading.ng-leave.ng-leave-active {*/
-    /*opacity: 1;*/
-/*}*/
-/*.bar-loading.ng-enter.ng-enter-active,*/
-/*.bar-loading.ng-leave {*/
-    /*opacity: 1;*/
-/*}*/
-
 .record-item {
     padding-left:27px
 }
@@ -88,6 +64,14 @@
 .bar-loading.ng-leave {
     height: 24px;
     border-width: 1px;
+}
+
+
+/* preview message in tab-message*/
+.preview-message {
+    margin-top:5px;
+    color:#AAA;
+    font-size:14px;
 }
 
 

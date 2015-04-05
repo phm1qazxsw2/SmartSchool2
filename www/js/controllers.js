@@ -1,21 +1,23 @@
 
-
 angular.module('starter.controllers', ['starter.services'])
 
-.controller('RootCtrl', function($scope, $state, Audio, Notice, $rootScope, $ionicLoading, Network, User) {
+.controller('RootCtrl', function($scope, $state, Audio, Notice, $rootScope,
+      $ionicLoading, Network, User) {
 
-  $rootScope.statusbar = { show:false, message:null };
-  $rootScope.channels = [];  // used by tab.message (MessageCtrl)
+  shareInit($rootScope);
+  $rootScope.uchannels = [];  // used by tab.message (MessageCtrl)
   $rootScope.badge = {
      quiz:0,
      message:0
   };
+
+  //用來檢查是否新進信息需要更新目前頁面
   $rootScope.cur_page = {
      state:'',
-     channel_id:0
+     ucid:0
   };
 
-  $rootScope.cur_channel = {
+  $rootScope.cur_uchannel = {
     messages:null
   };
 
@@ -26,12 +28,8 @@ angular.module('starter.controllers', ['starter.services'])
       try{
         console.log("## 4 registrationID=" + data + "#");
         Network.check(function netok() {
-          console.log("## 4.1 network ok, calling /user/setconfig");
-          User.setConfig({
-                uuid:ionic.Platform.device().uuid,
-                jpush_id:data,
-                phone:null
-              },
+          console.log("## 4.1 network ok, calling /user/setjpush data=" + data);
+          User.setJpush(data,
               function success() {
                 console.log("successfully calling front/user/set");
               },
@@ -55,18 +53,19 @@ angular.module('starter.controllers', ['starter.services'])
     $rootScope.refreshChannels(function(diff_channels) {
       for (var i = 0; i < diff_channels.length; i++) {
         // 更新新通知的 cache (最后传 true 就是
-        var diff_id = diff_channels[i].id;
-        Notice.getChannelMessages(diff_id, function(cache) {
+        var diff_ucid = diff_channels[i].ucid;
+        Notice.getChannelMessages(diff_ucid, function(cache) {
           // 如果刚好现在的页面就是这个channel的message页
           var t1 = ($rootScope.cur_page.state == 'tab.message-channel');
           var a = $rootScope.cur_page.channel_id;
-          var b = diff_id;
+          var b = diff_ucid;
+          var b = diff_ucid;
           var t2 = (a==b);
           if (t1 && t2) {
-            for (var j=0; j<$rootScope.channels.length; j++) {
-              if ($rootScope.channels[j].id == diff_id) {
-                $rootScope.channels[j].messages = cache.messages;
-                $rootScope.cur_channel.messages = cache.messages;
+            for (var j=0; j<$rootScope.uchannels.length; j++) {
+              if ($rootScope.uchannels[j].ucid == diff_ucid) {
+                $rootScope.uchannels[j].messages = cache.messages;
+                $rootScope.cur_uchannel.messages = cache.messages;
                 $rootScope.$apply();
               }
             }
@@ -80,11 +79,11 @@ angular.module('starter.controllers', ['starter.services'])
     }, 6000)
   };
 
-  $rootScope.decreaseChannelUnread = function(channel_id) {
-     for (var i=0; i<$rootScope.channels.length; i++) {
-       if ($rootScope.channels[i].id==channel_id) {
-         if ($rootScope.channels[i].unread>0)
-            $rootScope.channels[i].unread --;
+  $rootScope.decreaseChannelUnread = function(ucid) {
+     for (var i=0; i<$rootScope.uchannels.length; i++) {
+       if ($rootScope.uchannels[i].ucid==ucid) {
+         if ($rootScope.uchannels[i].unread>0)
+            $rootScope.uchannels[i].unread --;
          if ($rootScope.badge.message>0)
             $rootScope.badge.message --;
          break;
@@ -92,89 +91,39 @@ angular.module('starter.controllers', ['starter.services'])
      }
   };
 
-  $rootScope.showError = function (errobj) {
-    if (!errobj || !errobj.code)
-      errobj = { code:'x999' };
-
-    if (errobj.code=='e001') {
-      alert('Network is down!');
-    }
-    else if (errobj.code=='e002') {
-      alert("Cannot play, not finish recording yet");
-    }
-    else if (errobj.code=='e003') {
-      alert("Upload error");
-    }
-    else if (errobj.code=='e004') {
-      alert('error:channel message cache is empty');
-    }
-    else if (errobj.code=='e005') {
-      alert('play source is empty');
-    }
-    else if (errobj.code=='e006') {
-      alert("Cannot play, not finish recording yet");
-    }
-    else if (errobj.code=='e007') {
-      alert('error in playing');
-    }
-    else if (errobj.code=='e008') {
-      alert('object not found');
-    }
-    else if (errobj.code=='e999') {
-      alert('Unknown error!');
-    }
-    else if (errobj.code=='f001') {
-      alert('api error: wrong parameter!');
-    }
-    else if (errobj.code=='f002') {
-      alert('api error: user not found!');
-    }
-    else if (errobj.code=='f003') {
-      alert('api error: service not available!');
-    }
-    else if (errobj.code=='f998') {
-      alert('api error: unknown!');
-    }
-    else if (errobj.code=='b998') {
-      alert('server unknown error!');
-    }
-    else {
-      alert('error:' + JSON.stringify(errobj));
-    }
-    return;
-  }
-
-  $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams){
+  $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams){
     Audio.stop();
     //console.log("##state=" + JSON.stringify(toState) + "params=" + JSON.stringify(toParams));
     $rootScope.cur_page.state = toState.name;
     if (toState.name=='tab.message-channel') {
-      $rootScope.cur_page.channel_id = toParams.channelId;
+      $rootScope.cur_page.ucid = toParams.ucId;
     }
   })
 
   $rootScope.refreshChannels = function(callback, error_cb) {
     var org_unread_map = new Array;
-    for (var i=0; i<$rootScope.channels.length; i++) {
-      var c = $rootScope.channels[i];
-      org_unread_map[c.id] = c.unread;
+    for (var i=0; i<$rootScope.uchannels.length; i++) {
+      var c = $rootScope.uchannels[i];
+      org_unread_map[c.ucid] = c.unread;
     }
     var diffs = new Array;
-    Notice.getChannels(function(channels){
-      $rootScope.channels = channels;
+    Notice.getChannels(function(uchannels){
+      $rootScope.uchannels = uchannels;
       var unread = 0;
-      for(var i=0;i<channels.length; i++) {
-        unread += channels[i].unread;
-        var org_unread = org_unread_map[channels[i].id];
-        //console.log(channels[i].subtitle + " org_unread=" + org_unread + " unread=" + channels[i].unread)
-        if (org_unread!=channels[i].unread) {
-          diffs.push(channels[i]);
+      for(var i=0;i<uchannels.length; i++) {
+        unread += uchannels[i].unread;
+        var org_unread = org_unread_map[uchannels[i].ucid];
+        if (org_unread!=uchannels[i].unread) {
+          diffs.push(uchannels[i]);
         }
+        if (uchannels[i].icon.length==0)
+          uchannels[i].icon = 'img/ionic.png';
       }
       $rootScope.badge.message = unread;
       $rootScope.hideLoading();
       $rootScope.$broadcast('scroll.refreshComplete');
       callback && callback(diffs);
+      console.log("#c7");
     },
     function error(data, status) {
       $rootScope.hideLoading();
@@ -196,228 +145,134 @@ angular.module('starter.controllers', ['starter.services'])
   };
 
   $rootScope.badgestyle = 'badge-assertive';
-  console.log("##in RootCtrl");
-})
+  console.log("##in RootCtrl1");
 
-.controller('SignInCtrl', function($scope, $state) {
-  $scope.signin = function() {
-    $state.go('tab.quiz');
-  }
-})
-
-.controller('CalendarCtrl', function() {
-  console.log("in calendar controller");
-})
-
-.controller('QuizCtrl', function($scope, $rootScope, $http, Quiz) {
-  Quiz.all(function(quizzes) {
-      $scope.quizzes = quizzes;
-  });
-
-  $scope.$on('$ionicView.loaded', function(){
-    // 一開始進來更新下，這裡QuizCtrl 作為進來第一個view
-    $rootScope.initPush();
-    setTimeout(function(){$rootScope.refreshChannels();},1);
-  })
-})
-
-.controller('QuizRecordCtrl', function($scope, $ionicPlatform, $ionicLoading, $stateParams, Quiz) {
-
-  $scope.$on('$ionicView.loaded', function() {
-    console.log("## in loaded");
-    Quiz.get($stateParams.quizId, function(quiz) {
-      $scope.quiz = quiz;
-      $scope.record_style = 'ion-record';
-      console.log("in init");
-      $scope.state = "init";
-    });
-  })
-
+  //// loading plugin js
+  //angularLoad.loadScript(url_prefix + "/js/plugin/index").then(function() {
+  //  console.log("#successfully loaded js/plugin/index");
+  //}).catch(function() {
+  //  console.log("#error loading js/plugin/index");
+  //});
 
 })
 
-.controller('QuizDetailCtrl', function($scope, $ionicPlatform, $ionicLoading, $stateParams,
-                                       Quiz, Audio, Record, $rootScope) {
-
-  // $scope.pageTitle = pageTitle;
-  Quiz.get($stateParams.quizId, function(quiz) {
-    $scope.quiz = quiz;
-    $scope.progress = { play:0 };
-    $scope.play_style = 'ion-play';
-
-    $scope.record_style = 'ion-record';
-    if (quiz.status==0 || quiz.status==1)
-      $scope.record_state = "init";
-    else if (quiz.status==2 || quiz.status==3)
-      $scope.record_state = "recorded";
-  });
-
-  $scope.$on("$destroy", function(){
-    Audio.stop();
-  });
-
-  var playStatus = 0;
-  $scope.doPlayOrPause = function(src) {
-    if (playStatus==0) { // 还没开始
-      $scope.play_style = 'ion-pause';
-      $scope.play(src);
-      playStatus = 1;
-    }
-    else if (playStatus==1) { // 正在播放
-      Audio.pause();
-      $scope.play_style = 'ion-play';
-      playStatus = 2;
-    }
-    else if (playStatus==2) { // 暂停中
-      Audio.resume();
-      $scope.play_style = 'ion-pause';
-      playStatus = 1;
-    }
-    console.log("## playStatus=" + playStatus);
-  };
-
-  var is_dragging = false;
-  $scope.onDrag = function() {
-    is_dragging = true;
-  };
-
-  $scope.onRelease = function(e) {
-    is_dragging = false;
-    if (my_duration==0) {
-      console.log("my_duration is 0");
+.controller('LoginCtrl', function($scope, $rootScope, User, $state) {
+  function optional_upgrade(ios_link, android_link) {
+    if (confirm("發現新的版本，現在升級？")) {
+      if (ionic.Platform.platform()=='ios')
+        location.href = ios_link;
+      else //if (ionic.Platform.platform()=='android')
+        location.href = android_link;
       return;
     }
-    var ratio = 0;
-    var x = event.gesture.touches[0].clientX;
-    if (x<70) {
-      ratio = 0;
-    }
-    else if (x>236) {
-      ratio = 1;
-    }
-    else {
-      ratio = ((x-70)/(236-70));
-    }
-    var msecs = my_duration * ratio * 1000;
-    Audio.seek(msecs);
-  };
+    $state.go('index_tabs.tab.message');
+  }
+  function mandatory_grade(ios_link, android_link) {
+    alert('發現必須升級的版本, 前往下載頁面');
+    if (ionic.Platform.platform()=='ios')
+      location.href = ios_link;
+    else //if (ionic.Platform.platform()=='android')
+      location.href = android_link;
 
-  $scope.stop = function() {
-    Audio.stop();
-    $scope.play_style = 'ion-play';
-    setTimeout(function(){
-      $scope.progress.play = 0;
-      $scope.$apply();
-    },100);
-  };
-
-  var my_duration = 0;
-  $scope.play = function(src) {
-    Audio.play(src, function(duration) {
-      my_duration = duration;
-    },
-    function(progress) {
-      if (my_duration>0 && !is_dragging) {
-        $scope.progress.play = Math.ceil((progress / my_duration) * 100);
+  }
+  function user_logout() {
+    alert('您已在別的地方登入，即將登出本程式');
+    User.logout(function() {
+      $state.go('login');
+    })
+  }
+  console.log("###########in LoginCtrl 1############");
+  // when programe startup
+  // 1. get token
+  // 2. check version and token see if an upgrade is needed or already logined in other mobile device
+  $scope.settled = false;
+  setTimeout(function() {
+    User.getToken(function(token){
+      if (token!=null && token.length>10)
+        User.checkAppUser(function () {
+          $state.go('index_tabs.tab.message');
+        }, optional_upgrade, mandatory_grade, user_logout)
+      else {
+        User.checkAppUser(null, optional_upgrade, mandatory_grade);
+        $scope.settled = true;
         $scope.$apply();
       }
-    },
-    function finish() {
-      console.log("## in finish");
-      my_duration = 0;
-      $scope.progress.play = 0;
-      $scope.play_style = 'ion-play';
-      playStatus = 0;
-      Quiz.setPlayed($scope.quiz);
+    },function() {
+      User.checkAppUser(null, optional_upgrade, mandatory_grade);
+      $scope.settled = true;
       $scope.$apply();
-    },
-    function error(err) {
-      $rootScope.showError(err);
-    });
-  };
+    })
+  },500)
 
-  // recording below
-  var recording = null;
-  var last_recording = "";
-  $scope.startRecord = function () {
-    Record.record(
-      $scope.quiz,
-      function success() {},
-      function error(err) {
-        $rootScope.showError(err);
-    });
-    $scope.record_state = "recording";
-  };
+  //shareInit($rootScope);
 
-  $scope.stopRecord = function () {
-    Record.stop();
-    $scope.record_state = "recorded";
-    Quiz.setRecorded($scope.quiz);
-  };
-
-  $scope.redoRecord = function () {
-    $scope.record_state = "init";
-  };
-  //
-  $scope.playRecord = function() {
-    Record.play($scope.quiz, null, null, function finish() {
-      $scope.record_state = "recorded";
-      $scope.$apply();
-    },
-    function error(err){
-      $rootScope.showError(err);
-    });
-    $scope.record_state = "playing";
-  };
-
-  $scope.pausePlay = function() {
-    Audio.pause();
-    $scope.record_state = "paused";
-  };
-
-  $scope.resumePlay = function() {
-    Audio.resume();
-    $scope.record_state = "playing";
-  };
-
-  $scope.stopPlay = function() {
-    Audio.stop();
-    $scope.record_state = "recorded";
-  };
-
-  $scope.uploadRecord = function() {
-    console.log("### in uploadRecord");
-    var per = 0;
-    $rootScope.statusbar.message = '上傳中 0%';
-    $rootScope.statusbar.show = true;
-    var int = setInterval(function(){
-      per += 20;
-      if (per>100) {
-        $rootScope.statusbar.show = false;
-        per = 0;
-        clearInterval(int);
-      }
-      else {
-        $rootScope.statusbar.message = '上傳中 ' + per + '%';
-      }
-      $rootScope.$apply();
-    },1000);
-    //Record.upload($scope.quiz, function success() {
-    //
-    //},
-    //function error() {
-    //
-    //},
-    //function progress(p) {
-    //
-    //})
+  $scope.user = {
+    phone : '',
+    code : ''
   }
+  $scope.button_name = "取得驗證碼";
 
+  $scope.code_waiting = false;
+  $scope.code_sent = false;
+  var count = 0;
+  $scope.getCode = function() {
+    console.log("#in LoginCtrl 3 in getCode");
+    if ($scope.user.phone.length!=10 || $scope.user.phone.indexOf("09")!=0) {
+      $rootScope.showError({ code:'x', error:'請輸入09開頭10位數的手機號'})
+      return;
+    }
+    if (count>0) {
+      $rootScope.showError({ code:'x', error:'請等待一陣子再執行重新發送'})
+      return;
+    }
+    User.getcode($scope.user.phone, function success() {
+      $scope.code_waiting = true;
+      $scope.code_sent = true;
+      var int = setInterval(function() {
+        count ++;
+        $scope.button_name = "發送中(" + (60-count) + "秒)";
+        if (count>60) {
+          clearInterval(int);
+          $scope.button_name = "取得驗證碼";
+          $scope.code_waiting = false;
+          count = 0;
+        }
+        $scope.$apply();
+      }, 1000)
+    }, function error(err) {
+      $rootScope.showError(err);
+    })
+  }
+  $scope.login = function() {
+    User.login($scope.user.phone, $scope.user.code, function success(token) {
+      $state.go("index_tabs.tab.message")
+    }, function error(error) {
+      $scope.user.code = '';
+      $rootScope.showError(error);
+    })
+  }
 })
 
-.controller('MessageCtrl', function($scope, $rootScope) {
-  $scope.doRefresh = function() {
-    $rootScope.refreshChannels(function success(diff_channels) {
+.controller('MessageCtrl', function($scope, $rootScope, Notice) {
+
+    $scope.first_time = true;
+    $scope.$on('$ionicView.loaded', function(){
+      try {
+        console.log("##initpush1");
+        $rootScope.initPush();
+      }
+      catch(e) {
+        console.log("Exception:" + e);
+      }
+      setTimeout(function(){
+        $rootScope.refreshChannels(function() {
+          $scope.first_time = false;
+        });
+      },1);
+    })
+
+    $scope.doRefresh = function() {
+      $rootScope.refreshChannels(function success(diff_channels) {
       for (var i=0; i<diff_channels.length; i++) {
         Notice.clearCacheByChannelId(diff_channels[i].id);
       }
@@ -429,75 +284,147 @@ angular.module('starter.controllers', ['starter.services'])
 })
 
 .controller('ChannelDetailCtrl', function($scope, $ionicLoading, $rootScope, $stateParams, Notice) {
-  for (var i=0; i<$rootScope.channels.length; i++) {
-    if ($rootScope.channels[i].id==$stateParams.channelId)
-      $rootScope.cur_channel = $rootScope.channels[i];
+  for (var i=0; i<$rootScope.uchannels.length; i++) {
+    if ($rootScope.uchannels[i].ucid==$stateParams.ucId)
+      $rootScope.cur_uchannel = $rootScope.uchannels[i];
   }
 
   $scope.doRefresh = function() {
-    $rootScope.cur_channel.messages = null;
-    $scope.loadMore();
+    $rootScope.cur_uchannel.messages = null;
+    $scope.loadMore(function() {
+      $rootScope.$broadcast('scroll.refreshComplete'); //下拉trigger loadMore，need to broadcast refreshcomplete
+    });
   }
 
   $scope.hasMore = true;
-  $scope.loadMore = function() {
-    if ($rootScope.cur_channel.messages==null) {
+  $scope.loadMore = function(done_cb) {
+    if ($rootScope.cur_uchannel.messages==null) {
       $rootScope.showLoading();
-      Notice.clearCacheByChannelId($stateParams.channelId);
-      Notice.getChannelMessages($stateParams.channelId, function(cache){
-        $rootScope.cur_channel.messages = cache.messages;
+      console.log("#ChannelDetailCtrl ucId=" + $stateParams.ucId);
+      Notice.clearCacheByChannelId($stateParams.ucId);
+      Notice.getChannelMessages($stateParams.ucId, function(cache){
+        $rootScope.cur_uchannel.messages = cache.messages;
         $rootScope.hideLoading();
-        $rootScope.$broadcast('scroll.refreshComplete'); //下拉trigger loadMore，need to broadcast refreshcomplete
         $scope.$broadcast('scroll.infiniteScrollComplete');
+        done_cb && done_cb();
       },
       function error(data, status) {
         $rootScope.hideLoading();
         $rootScope.showError(data);
+        $scope.$broadcast('scroll.infiniteScrollComplete');
+        done_cb && done_cb();
       })
     }
     else {
-      Notice.getMore($rootScope.cur_channel, function(more_messages) {
+      console.log("## in getmore controller");
+      Notice.getMore($rootScope.cur_uchannel, function(more_messages) {
         if (more_messages.length==0) {
           $scope.hasMore = false;
           return;
         }
         for (var i=0; i<more_messages.length; i++)
-          $rootScope.cur_channel.messages.push(more_messages[i]);
+          $rootScope.cur_uchannel.messages.push(more_messages[i]);
         $scope.$broadcast('scroll.infiniteScrollComplete');
       },
       function error(data) {
         $rootScope.showError(data);
+        $scope.$broadcast('scroll.infiniteScrollComplete');
       })
     }
   }
 })
 
 .controller('MessageDetailCtrl', function($scope, $stateParams, $rootScope, Notice) {
-  Notice.getMessage($stateParams.channelId, $stateParams.messageId, function success(message) {
+  Notice.getMessage($stateParams.ucId, $stateParams.umId, function success(message) {
     $scope.message = message;
-    if (message.last_read==null) {
+    if (message.last_read=='') {
       Notice.setRead(message);
-      $rootScope.decreaseChannelUnread($stateParams.channelId);
+      $rootScope.decreaseChannelUnread($stateParams.ucId);
     }
   },
   function error(data) {
     $rootScope.showError(data);
   });
-})
-
-.controller('AccountCtrl', function($scope, $rootScope) {
-  $scope.settings = {
-    enableFriends: true
-  };
-
-  $scope.testEffect = function() {
-    $rootScope.statusbar.message = '12345';
-    $rootScope.statusbar.show = true;
-    setTimeout(function(){
-      $rootScope.statusbar.show = false;
-      $rootScope.$apply();
-    },1000)
-    //$dialogs.error("Test");
-  }
-
 });
+
+function shareInit(rootScope) {
+  console.log("## in shareInit 1");
+  rootScope.statusbar = { show:false, message:null };
+  rootScope.showError = function (errobj) {
+    var e = new Error();
+    console.log(e.stack);
+
+    //console.log("## in showError" + ((typeof errobj.error)=="string") + " #" + (errobj.code) + "#" + (!errobj.code));
+    if (!errobj || !errobj.code) {
+      console.log("## in showError 2 errobj=" + JSON.stringify(errobj));
+      errobj = { code:'x999', error:'Service unavailable' };
+    }
+
+    var err_msg = '';
+    if (errobj.code=='e001') {
+      err_msg = 'Network is down!';
+    }
+    else if (errobj.code=='e002') {
+      err_msg = "Cannot play, not finish recording yet";
+    }
+    else if (errobj.code=='e003') {
+      err_msg = "Upload error";
+    }
+    else if (errobj.code=='e004') {
+      err_msg = 'error:channel message cache is empty';
+    }
+    else if (errobj.code=='e005') {
+      err_msg = 'play source is empty';
+    }
+    else if (errobj.code=='e006') {
+      err_msg = "Cannot play, not finish recording yet";
+    }
+    else if (errobj.code=='e007') {
+      err_msg = 'error in playing';
+    }
+    else if (errobj.code=='e008') {
+      err_msg = 'object not found';
+    }
+    else if (errobj.code=='e999') {
+      err_msg = 'Unknown error!';
+    }
+    else if (errobj.code=='f001') {
+      err_msg = '参数不正確';
+    }
+    else if (errobj.code=='f002') {
+      err_msg = '用戶不存在';
+    }
+    else if (errobj.code=='f003') {
+      err_msg = 'api error: service not available!';
+    }
+    else if (errobj.code=='f004') {
+      err_msg = '登入信息错误!';
+    }
+    else if (errobj.code=='f005') {
+      err_msg = 'Checksum incorrect!';
+    }
+    else if (errobj.code=='f006') {
+      err_msg = 'UserChannel 不存在';
+    }
+    else if (errobj.code=='f998') {
+      err_msg = 'api error: unknown!';
+    }
+    else if (errobj.code=='b998') {
+      err_msg = 'server unknown error!';
+    }
+    else if ((typeof errobj.error)=="string") {
+      err_msg = errobj.error;
+    }
+    else {
+      err_msg = 'error:' + JSON.stringify(errobj);
+    }
+    rootScope.statusbar.message = err_msg;
+    rootScope.statusbar.show = true;
+    rootScope.statusbar.class = "bar-assertive";
+    setTimeout(function() {
+      rootScope.statusbar.show = false;
+      rootScope.$apply();
+    }, 1500)
+  }
+  console.log("## in shareInit");
+}

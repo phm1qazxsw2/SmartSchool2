@@ -1,4 +1,4 @@
-<ion-view view-title="Messages">
+<ion-view view-title="{{cur_uchannel.title}}{{cur_uchannel.childname}}">
   <ion-content ng-class="{'has-loading': statusbar.show}">
     <ion-refresher
           pulling-text="下拉刷新中..."
@@ -6,15 +6,19 @@
     </ion-refresher>
     <ion-list>
       <ion-item class="item-remove-animate item-icon-left item-icon-right"
-                ng-repeat="message in cur_channel.messages track by $index"
-                type="item-text-wrap" href="#/tab/message/{{cur_channel.id}}/{{message.id}}">
-        <i class="icon positive ion-email" ng-if="message.last_read==null"></i>
-        <i class="icon dark ion-checkmark-circled" ng-if="message.last_read!=null"></i>
+                ng-repeat="message in cur_uchannel.messages track by $index"
+                type="item-text-wrap" href="#/index_tabs/tab/message/{{cur_uchannel.ucid}}/{{message.umid}}">
+        <i class="icon positive ion-email" ng-if="message.last_read==''"></i>
+        <i class="icon dark ion-checkmark-circled" ng-if="message.last_read!=''"></i>
         <h2>
           {{message.title}} ...
         </h2>
-        <div class="small-font">{{message.created}}</div>
+        <div class="small-font"><span am-time-ago="message.created"></span></div>
         <i class="icon ion-chevron-right icon-accessory"></i>
+      </ion-item>
+      <ion-item class="item-icon-left" ng-if="cur_uchannel.messages.length==0">
+          <i class="icon assertive ion-alert"></i>
+          <h2>目前沒有消息，下拉可重新加載</h2>
       </ion-item>
     </ion-list>
     <ion-infinite-scroll ng-if="hasMore"

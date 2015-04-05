@@ -1,4 +1,4 @@
-<ion-view view-title="">
+<ion-view view-title="內容">
   <ion-content ng-class="{'has-loading': statusbar.show}">
     <div class="card">
       <div class="item item-divider">
@@ -8,7 +8,7 @@
         {{message.text}}
       </div>
       <div class="item item-divider">
-        {{message.created}}
+        <span am-time-ago="message.created"></span>
       </div>
     </div>
 

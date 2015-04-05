@@ -1,16 +1,12 @@
-<ion-view view-title="Account">
+<ion-view view-title="設定">
+  <ion-nav-bar class="bar-calm"></ion-nav-bar>
   <ion-content ng-class="{'has-loading': statusbar.show}">
     <ion-list>
-      <ion-item class="item-toggle">
-        Enable Friends
-        <label class="toggle">
-          <input type="checkbox" ng-model="settings.enableFriends">
-          <div class="track">
-            <div class="handle"></div>
-          </div>
-        </label>
+      <ion-item>
+        <button class="button icon-right ion-chevron-right button-calm" ng-click="logout()">
+          登出
+        </button>
       </ion-item>
     </ion-list>
-    <button ng-click="testEffect()">New Message Effect</button>
   </ion-content>
 </ion-view>
